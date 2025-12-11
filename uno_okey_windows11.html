@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNO & OKEY Skor</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f3f3f3;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    /* Windows 11 style card */
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 25px;
+      width: fit-content;
+      margin: auto;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .menu {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 15px 35px;
+      font-size: 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background: white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.04);
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      font-size: 16px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .hidden { display: none; }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    .add-row-btn {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 18px;
+      background: #e8e8e8;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>UNO & OKEY Skor</h1>
+
+  <div id="mainMenu" class="menu">
+    <button onclick="showUnoSelection()">UNO</button>
+    <button onclick="showOkeySelection()">OKEY</button>
+  </div>
+
+  <!-- UNO Oyuncu Seçimi -->
+  <div id="unoSelect" class="hidden card">
+    <h2>UNO Oyuncu Sayısı</h2>
+    <input id="unoCount" type="number" min="2" max="10" value="2" />
+    <br><br>
+    <button onclick="startUno()">Başla</button>
+    <button onclick="goHome()">Geri</button>
+  </div>
+
+  <!-- OKEY Mod Seçimi -->
+  <div id="okeySelect" class="hidden card">
+    <h2>OKEY Modu</h2>
+    <button onclick="startOkey(2)">Eşli (2 Takım)</button>
+    <br><br>
+    <button onclick="startOkey(4)">Tek (4 Oyuncu)</button>
+    <br><br>
+    <button onclick="goHome()">Geri</button>
+  </div>
+
+  <!-- Skor Tablosu -->
+  <div id="scoreArea" class="hidden card">
+    <button onclick="goHome()">Ana Menü</button>
+
+    <h3 id="modeTitle"></h3>
+
+    <div class="table-container">
+      <table id="scoreTable"></table>
+    </div>
+
+    <button id="addRowBtn" class="add-row-btn hidden" onclick="addUnoRow()">UNO Satır Ekle</button>
+  </div>
+
+  <script>
+    let mode = "";
+    let playerCount = 0;
+    let rows = 0;
+
+    function goHome(){
+      document.getElementById("mainMenu").classList.remove("hidden");
+      document.getElementById("unoSelect").classList.add("hidden");
+      document.getElementById("okeySelect").classList.add("hidden");
+      document.getElementById("scoreArea").classList.add("hidden");
+    }
+
+    function showUnoSelection(){
+      document.getElementById("mainMenu").classList.add("hidden");
+      document.getElementById("unoSelect").classList.remove("hidden");
+    }
+
+    function showOkeySelection(){
+      document.getElementById("mainMenu").classList.add("hidden");
+      document.getElementById("okeySelect").classList.remove("hidden");
+    }
+
+    function startUno(){
+      mode = "UNO";
+      playerCount = parseInt(document.getElementById("unoCount").value);
+      rows = 5;
+      buildTable();
+    }
+
+    function startOkey(col){
+      mode = "OKEY";
+      playerCount = col;
+      rows = 11;
+      buildTable();
+    }
+
+    function buildTable(){
+      document.getElementById("unoSelect").classList.add("hidden");
+      document.getElementById("okeySelect").classList.add("hidden");
+      document.getElementById("scoreArea").classList.remove("hidden");
+
+      document.getElementById("modeTitle").innerText = mode + " Skor Tablosu";
+      document.getElementById("addRowBtn").classList.toggle("hidden", mode !== "UNO");
+
+      let table = document.getElementById("scoreTable");
+      table.innerHTML = "";
+
+      let header = document.createElement("tr");
+      for(let i=0;i<playerCount;i++){
+        let th = document.createElement("th");
+        th.innerHTML = `<input placeholder='İsim'>`;
+        header.appendChild(th);
+      }
+      table.appendChild(header);
+
+      for(let r=0;r<rows;r++) addRow();
+
+      addTotalRow();
+    }
+
+    function addRow(){
+      let table = document.getElementById("scoreTable");
+      let tr = document.createElement("tr");
+
+      for(let c=0;c<playerCount;c++){
+        let td = document.createElement("td");
+        td.innerHTML = `<input oninput='calculate()' placeholder='Puan'>`;
+        tr.appendChild(td);
+      }
+
+      table.appendChild(tr);
+    }
+
+    function addTotalRow(){
+      let table = document.getElementById("scoreTable");
+      let totalRow = document.createElement("tr");
+      totalRow.id = "totals";
+
+      for(let i=0;i<playerCount;i++){
+        let td = document.createElement("td");
+        td.innerHTML = "0";
+        totalRow.appendChild(td);
+      }
+
+      table.appendChild(totalRow);
+    }
+
+    function addUnoRow(){
+      let table = document.getElementById("scoreTable");
+      table.deleteRow(table.rows.length - 1);
+      addRow();
+      addTotalRow();
+      calculate();
+    }
+
+    function calculate(){
+      let table = document.getElementById("scoreTable");
+      let totals = Array(playerCount).fill(0);
+
+      for(let r=1; r < table.rows.length - 1; r++){
+        let row = table.rows[r];
+        for(let c=0;c<playerCount;c++){
+          let val = row.cells[c].children[0].value.trim();
+          let num = parseInt(val) || 0;
+          totals[c] += num;
+        }
+      }
+
+      let totalRow = document.getElementById("totals");
+      for(let i=0;i<playerCount;i++) totalRow.cells[i].innerText = totals[i];
+    }
+  </script>
+
+</body>
+</html>
